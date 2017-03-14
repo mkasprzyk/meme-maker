@@ -1,0 +1,8 @@
+language: python
+python:
+  #TODO: Add more versions to grid (including Py2.7 which requires use of six probably)
+  - "3.5"
+
+install: "pip install -r requirements/test.py"
+
+script: python setup.py test
