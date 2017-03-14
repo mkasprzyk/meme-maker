@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+import unittest
 import pip
 
 import os
@@ -21,6 +22,10 @@ class CustomInstall(install):
         self.install_from_dist()
         install.run(self)
 
+def tests():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('meme_maker.tests', pattern='test_*.py')
+    return test_suite
 
 install_requires = ['setuptools']
 
@@ -50,4 +55,5 @@ setup(name="meme-maker",
     cmdclass={
         'install': CustomInstall
     },
+    test_suite='setup.tests',
 )
