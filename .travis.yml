@@ -4,6 +4,6 @@ python:
   #TODO: Like above (just testing travis :-)
   - "3.5"
 
-install: "pip install -r requirements/test.py"
+install: "pip install -r requirements/test.txt"
 
 script: python setup.py test
