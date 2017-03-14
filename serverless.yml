@@ -21,7 +21,7 @@ provider:
 
 functions:
   meme:
-    handler: handler.handler
+    handler: handler.meme_handler
     environment:
       bucket: ${self:custom.bucket}
     events:
