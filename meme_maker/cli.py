@@ -3,7 +3,7 @@
 import click
 import logging
 
-from meme import Meme
+from .meme import Meme
 
 LOG_FORMAT = "%(levelname)9s [%(asctime)-15s] %(name)s - %(message)s"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

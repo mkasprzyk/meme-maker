@@ -83,7 +83,7 @@ class Meme:
         self.text = text
         self.filetype = 'png'
         self.storage = Storage(self.logger)
-        self.font_path = './assets/impact.ttf'
+        self.font_path = os.path.join(os.path.dirname(__file__), 'assets/impact.ttf')
 
     def set_paths(self):
         self.template_path = '%sme/mplate/%s.%s' % (self.storage.path, self.template_name, self.filetype)
