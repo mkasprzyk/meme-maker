@@ -11,9 +11,15 @@ python setup.py install
 meme-maker [opts]
 ```
 
+**Development**
+```
+pip install -r requirements/dev.txt
+python -m meme_maker [opts]
+```
+
 **Testing**
 ```
-pip install -r requirements/test.py
+pip install -r requirements/test.txt
 python setup.py test
 ```
 
