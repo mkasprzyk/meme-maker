@@ -3,7 +3,7 @@
 import hashlib
 import os
 import io
-import urllib2 as urllib
+import requests
 import tempfile
 import textwrap
 import time
@@ -91,19 +91,17 @@ class Meme:
         self.meme_path = '%sme/me/%s-%s.%s' % (self.storage.path, self.template_name, timestamp, self.filetype)
 
     def generate_template_name(self):
-        return hashlib.md5().update(self.url).hexdigest()
+        return hashlib.md5(self.url.encode('utf-8')).hexdigest()
 
     def get_image_from_url(self):
         self.logger.info('downloading %s' % self.url)
         try:
-            image = urllib.urlopen(self.url).read()
-        except urllib.HTTPError:
+            image = requests.get(self.url)
+        except requests.exceptions.RequestException as e:
             self.logger.error('Unable to retreive URL: %s' % url)
-        except Exception as e:
-            self.logger.error('Unable to retreive URL: %s' % e)
 
         try:
-            self.image = Image.open(io.BytesIO(image)).convert('RGB')
+            self.image = Image.open(io.BytesIO(image.content)).convert('RGB')
         except IOError:
             self.logger.error('Given URL doesnt seems to be a proper image')
         except Exception as e:
@@ -147,7 +145,7 @@ class Meme:
             return '', 0
         self.logger.info('preparing meme text')
         wrapping = 32
-        text = str(text).encode('utf-8').strip().upper()
+        text = text.strip().upper()
         text = textwrap.wrap(text, wrapping)
         text_width = 0
         for line in text:
