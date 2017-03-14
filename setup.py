@@ -49,7 +49,7 @@ setup(name="meme-maker",
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'meme-maker = meme_maker.__main__:handler',
+            'meme-maker = meme_maker.__main__:cli',
         ]
     },
     cmdclass={
