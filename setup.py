@@ -7,7 +7,6 @@ import pip
 import os
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
-<<<<<<< HEAD
 
 class SetupTypes:
     SERVERLESS = 'serverless'
@@ -40,13 +39,9 @@ class CustomInstall(install):
     def prepare_requirements(self):
         requirements = os.path.join(os.getcwd(), SetupTypes.requirements(self.setup_type))
         assert os.path.exists(requirements), 'Invalid requirements path!'
-=======
-class CustomInstall(install):
-    requirements_base = 'requirements/base.txt'
 
     def prepare_requirements(self):
         requirements = os.path.join(os.getcwd(), self.requirements_base)
->>>>>>> 3c76a3cf64e27dac3d9f84c31f69fa04c02b80e4
         return requirements
 
     def install_from_dist(self):
@@ -57,10 +52,7 @@ class CustomInstall(install):
         self.install_from_dist()
         install.run(self)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 3c76a3cf64e27dac3d9f84c31f69fa04c02b80e4
 def tests():
     test_loader = unittest.TestLoader()
     test_suite = test_loader.discover('meme_maker.tests', pattern='test_*.py')
