@@ -117,6 +117,7 @@ class Meme:
         elif self.storage.type == 's3':
             self.storage.s3.put_object(
                 Bucket=self.storage.bucket,
+                ACL='public-read',
                 Body=open(tmp_path, 'rb'),
                 ContentType='image/%s' % self.filetype,
                 Key=path
@@ -195,7 +196,7 @@ class Meme:
         self.logger.info('drawing meme')
         self.draw = ImageDraw.Draw(self.image)
         #font_size = #TODO motzno - some dependency on the image height
-        self.font = ImageFont.truetype(self.font_path, size=40)
+        self.font = ImageFont.truetype(self.font_path, size=45)
 
         text_top, text_top_width = self.prepare_text(' '.join(self.text).split('|')[0])
         text_bottom, text_bottom_width = self.prepare_text(' '.join(self.text).split('|')[1:])
