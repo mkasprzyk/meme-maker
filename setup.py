@@ -39,9 +39,6 @@ class CustomInstall(install):
     def prepare_requirements(self):
         requirements = os.path.join(os.getcwd(), SetupTypes.requirements(self.setup_type))
         assert os.path.exists(requirements), 'Invalid requirements path!'
-
-    def prepare_requirements(self):
-        requirements = os.path.join(os.getcwd(), self.requirements_base)
         return requirements
 
     def install_from_dist(self):
