@@ -33,7 +33,8 @@ def response(text, response_url=None):
     return {
         'statusCode': '200',
         'body': json.dumps(data),
-    }.update(headers)
+        'headers': headers
+    }
 
 
 def handler(event, context):
@@ -44,13 +45,14 @@ def handler(event, context):
 
     bucket = os.environ['bucket']
     params = parse_qs(event['body'])
-    command = params['text'][0].split(' ')
+    command = params['text'][0].split(' ') if 'text' in params else ''
     response_url = params['response_url'][0]
     user_name = params['user_name'][0]
 
     url, command = get_value_from_command(command, 'url')
     template, command = get_value_from_command(command, 'meme')
     text = ' '.join(command)
+    print text
 
     if not template and not url:
         return response('no parameters no meme no kek')

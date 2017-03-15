@@ -144,6 +144,8 @@ class Meme:
     def prepare_text(self, text):
         if not text:
             return '', 0
+        if type(text) == list:
+            text = text[0]
         self.logger.info('preparing meme text')
         wrapping = 32
         text = text.strip().upper()
