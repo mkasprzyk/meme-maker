@@ -7,11 +7,38 @@ import pip
 import os
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+
+class SetupTypes:
+    SERVERLESS = 'serverless'
+    BASE = 'base'
+
+    @staticmethod
+    def requirements(setup_type):
+        requirements_path_pattern = 'requirements/{setup_type}.txt'
+        return requirements_path_pattern.format(
+            setup_type=setup_type
+        )
+
+
 class CustomInstall(install):
-    requirements_base = 'requirements/base.txt'
+
+    user_options = [
+        ('setup-type=', None, 'Specify setup type ({})'.format(
+            ','.join([SetupTypes.SERVERLESS, SetupTypes.BASE])
+        )),
+   ] + install.user_options
+
+    def initialize_options(self):
+        super(CustomInstall, self).initialize_options()
+        self.setup_type = SetupTypes.BASE
+
+    def finalize_options(self):
+        super(CustomInstall, self).finalize_options()
+        assert self.setup_type in (None, SetupTypes.BASE, SetupTypes.SERVERLESS), 'Invalid setup type!'
 
     def prepare_requirements(self):
-        requirements = os.path.join(os.getcwd(), self.requirements_base)
+        requirements = os.path.join(os.getcwd(), SetupTypes.requirements(self.setup_type))
+        assert os.path.exists(requirements), 'Invalid requirements path!'
         return requirements
 
     def install_from_dist(self):
@@ -21,6 +48,7 @@ class CustomInstall(install):
     def run(self):
         self.install_from_dist()
         install.run(self)
+
 
 def tests():
     test_loader = unittest.TestLoader()
