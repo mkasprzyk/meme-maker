@@ -1,4 +1,4 @@
-# meme-maker [![Build Status](https://travis-ci.org/mkasprzyk/meme-maker.svg?branch=master)](https://travis-ci.org/mkasprzyk/meme-maker)
+# meme-maker [![Build Status](https://travis-ci.org/jacekszubert/meme-maker.svg?branch=master)](https://travis-ci.org/jacekszubert/meme-maker)
 CLI, API and Slack bot to generate memes. Make memes not war.
 
 **How to install?**
