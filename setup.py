@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-import pkg_resources
+from setuptools.command.sdist import sdist
 import unittest
 import pip
 
@@ -51,8 +51,7 @@ class CustomCommand(object):
         return install_requires
 
     def update_install_requires(self):
-        self.dist.requires = lambda x: \
-            [pkg_resources.Requirement(package) for package in self.prepare_install_requires()]
+        self.distribution.install_requires = self.prepare_install_requires()
 
     def install_from_dist(self):
         pip_params = ['install', '-r', self.prepare_requirements()]
@@ -68,13 +67,20 @@ def command_factory(base_command):
 class CustomInstall(command_factory(install)):
     def run(self):
         self.install_from_dist()
-        install.run(self)
+        super(CustomInstall, self).run()
 
 
 class CustomDevelop(command_factory(develop)):
     def run(self):
         self.update_install_requires()
-        develop.run(self)
+        super(CustomDevelop, self).run()
+
+
+class CustomSdist(command_factory(sdist)):
+    def run(self):
+        self.update_install_requires()
+        super(CustomSdist, self).run()
+
 
 def tests():
     test_loader = unittest.TestLoader()
@@ -91,12 +97,13 @@ setup(name="meme-maker",
     author_email="",
     url="https://github.com/jacekszubert/meme-maker",
     keywords="meme, memes, slack, bot, api, cli, generator",
-    classifiers=["Development Status :: 0.1 - Beta",
-                 "Intended Audience :: Developers",
+    classifiers=["Intended Audience :: Developers",
                  "License :: OSI Approved :: BSD License",
                  "Programming Language :: Python",
                  "Topic :: Software Development :: Libraries :: Python Modules",
                  ],
+    #TODO: Add option to extend install requires
+    #install_requires,
     packages=find_packages(),
     include_package_data=True,
     entry_points={
@@ -106,7 +113,8 @@ setup(name="meme-maker",
     },
     cmdclass={
         'install': CustomInstall,
-        'develop': CustomDevelop
+        'develop': CustomDevelop,
+        'sdist': CustomSdist
     },
-    test_suite='setup.tests',
+    test_suite='setup.tests'
 )
