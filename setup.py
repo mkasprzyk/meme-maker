@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+from setuptools.command.develop import develop
+import pkg_resources
 import unittest
 import pip
 
@@ -20,20 +22,20 @@ class SetupTypes:
         )
 
 
-class CustomInstall(install):
+class CustomCommand(object):
 
     user_options = [
         ('setup-type=', None, 'Specify setup type ({})'.format(
             ','.join([SetupTypes.SERVERLESS, SetupTypes.BASE])
         )),
-   ] + install.user_options
+    ]
 
     def initialize_options(self):
-        super(CustomInstall, self).initialize_options()
+        super(CustomCommand, self).initialize_options()
         self.setup_type = SetupTypes.BASE
 
     def finalize_options(self):
-        super(CustomInstall, self).finalize_options()
+        super(CustomCommand, self).finalize_options()
         assert self.setup_type in (None, SetupTypes.BASE, SetupTypes.SERVERLESS), 'Invalid setup type!'
 
     def prepare_requirements(self):
@@ -41,21 +43,44 @@ class CustomInstall(install):
         assert os.path.exists(requirements), 'Invalid requirements path!'
         return requirements
 
+    def prepare_install_requires(self):
+        install_requires = []
+        parsed_requirements = pip.req.parse_requirements(self.prepare_requirements(), session='nevermind')
+        for line in parsed_requirements:
+            install_requires.append(str(line.req))
+        return install_requires
+
+    def update_install_requires(self):
+        self.dist.requires = lambda x: \
+            [pkg_resources.Requirement(package) for package in self.prepare_install_requires()]
+
     def install_from_dist(self):
         pip_params = ['install', '-r', self.prepare_requirements()]
         pip.main(pip_params)
 
+
+def command_factory(base_command):
+    class Command(CustomCommand, base_command):
+        user_options = CustomCommand.user_options + base_command.user_options
+    return Command
+
+
+class CustomInstall(command_factory(install)):
     def run(self):
         self.install_from_dist()
         install.run(self)
 
+
+class CustomDevelop(command_factory(develop)):
+    def run(self):
+        self.update_install_requires()
+        develop.run(self)
 
 def tests():
     test_loader = unittest.TestLoader()
     test_suite = test_loader.discover('meme_maker.tests', pattern='test_*.py')
     return test_suite
 
-install_requires = ['setuptools']
 
 setup(name="meme-maker",
     license = "MIT",
@@ -72,7 +97,6 @@ setup(name="meme-maker",
                  "Programming Language :: Python",
                  "Topic :: Software Development :: Libraries :: Python Modules",
                  ],
-    install_requires=install_requires,
     packages=find_packages(),
     include_package_data=True,
     entry_points={
@@ -81,7 +105,8 @@ setup(name="meme-maker",
         ]
     },
     cmdclass={
-        'install': CustomInstall
+        'install': CustomInstall,
+        'develop': CustomDevelop
     },
     test_suite='setup.tests',
 )
