@@ -1,12 +1,12 @@
-service: meme-generator
+service: meme-maker
 
 custom:
-  bucket: meme123  #must be aws wide unique
+  bucket: kekmeme  #must be aws wide unique
 
 provider:
   name: aws
   runtime: python2.7
-  region: ap-southeast-2
+  region: eu-west-1
 
   iamRoleStatements:
     - Effect: "Allow"
@@ -16,8 +16,11 @@ provider:
     - Effect: "Allow"
       Action:
         - "s3:PutObject"
+        - "s3:PutObjectAcl"
         - "s3:GetObject"
-      Resource: "arn:aws:s3:::${self:custom.bucket}"
+        - "s3:GetObjectAcl"
+        - "s3:DeleteObject"
+      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
 
 functions:
   meme:
@@ -34,4 +37,11 @@ resources:
     MemeBucket:
       Type: AWS::S3::Bucket
       Properties:
+        AccessControl: PublicRead
         BucketName: ${self:custom.bucket}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: error.html
+
+#plugins:
+#  - serverless-python-requirements

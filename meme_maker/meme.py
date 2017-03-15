@@ -43,12 +43,12 @@ class Storage:
             if not os.path.isdir(path):
                 os.makedirs(path)
 
-    def reckognize_storage(self, path):
+    def recognize_storage(self, path):
         if os.path.isdir(path):
             self.type = 'local'
             self.path = path
             self.create_dir_structure()
-            self.logger.info('reckognized storage: %s' % self.type)
+            self.logger.info('recognized storage: %s' % self.type)
             return
 
         self.setup_s3_client()
@@ -62,13 +62,13 @@ class Storage:
                 Prefix=path
             )
         except Exception as e:
-            self.logger.error('Specified path not reckognized as local or s3: %s' % e)
+            self.logger.error('Specified path not recognized as local or s3: %s' % e)
             sys.exit(1)
 
         self.type = 's3'
         self.bucket = bucket
         self.path = path
-        self.logger.info('reckognized storage: %s' % self.type)
+        self.logger.info('recognized storage: %s' % self.type)
 
 
 class Meme:
@@ -117,6 +117,7 @@ class Meme:
         elif self.storage.type == 's3':
             self.storage.s3.put_object(
                 Bucket=self.storage.bucket,
+                ACL='public-read',
                 Body=open(tmp_path, 'rb'),
                 ContentType='image/%s' % self.filetype,
                 Key=path
@@ -195,7 +196,7 @@ class Meme:
         self.logger.info('drawing meme')
         self.draw = ImageDraw.Draw(self.image)
         #font_size = #TODO motzno - some dependency on the image height
-        self.font = ImageFont.truetype(self.font_path, size=40)
+        self.font = ImageFont.truetype(self.font_path, size=45)
 
         text_top, text_top_width = self.prepare_text(' '.join(self.text).split('|')[0])
         text_bottom, text_bottom_width = self.prepare_text(' '.join(self.text).split('|')[1:])
@@ -213,7 +214,7 @@ class Meme:
         self.draw_text(bottom_xy, text_bottom)
 
     def make_meme(self, path):
-        self.storage.reckognize_storage(path)
+        self.storage.recognize_storage(path)
         self.set_paths()
 
         if self.url:

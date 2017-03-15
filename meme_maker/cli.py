@@ -14,6 +14,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--url', '-u', help='image url')
 @click.argument('text', nargs=-1)
 def cli(meme, url, text):
+    if not meme or not url:
+        raise click.BadParameter('No parameters specified')
     template = meme
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
     logger = logging.getLogger('meme')
