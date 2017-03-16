@@ -1,3 +1,2 @@
 include meme_maker/assets/*.ttf
 include requirements/*.txt
-include .setup_type
