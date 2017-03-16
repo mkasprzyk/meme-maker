@@ -15,6 +15,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 class SetupTypes:
     SERVERLESS = 'serverless'
     BASE = 'base'
+    TEST = 'test'
+    PROD = 'prod'
+    DEV = 'dev'
+
+    all = [SERVERLESS, DEV, TEST, BASE, PROD]
 
     @staticmethod
     def requirements(setup_type):
@@ -26,70 +31,36 @@ class SetupTypes:
 
 class CustomCommand(object):
 
-    user_options = [
-        ('setup-type=', None, 'Specify setup type ({})'.format(
-            ','.join([SetupTypes.SERVERLESS, SetupTypes.BASE])
-        )),
-    ]
-
-    setup_type = SetupTypes.BASE
-
-    def initialize_options(self):
-        super(CustomCommand, self).initialize_options()
-
-    def finalize_options(self):
-        super(CustomCommand, self).finalize_options()
-        assert self.setup_type in (None, SetupTypes.BASE, SetupTypes.SERVERLESS), 'Invalid setup type!'
-
-    def prepare_requirements(self):
-        requirements = os.path.join(os.getcwd(), SetupTypes.requirements(self.setup_type))
+    def prepare_requirements(self, setup_type):
+        requirements = os.path.join(os.getcwd(), SetupTypes.requirements(setup_type))
         assert os.path.exists(requirements), 'Invalid requirements path!'
         return requirements
 
-    def prepare_install_requires(self):
+    def prepare_install_requires(self, setup_type=SetupTypes.BASE):
         install_requires = []
-        parsed_requirements = pip.req.parse_requirements(self.prepare_requirements(), session='nevermind')
+        parsed_requirements = pip.req.parse_requirements(self.prepare_requirements(setup_type), session='nevermind')
         for line in parsed_requirements:
             install_requires.append(str(line.req))
         return install_requires
 
-    def update_install_requires(self):
-        self.distribution.install_requires = self.prepare_install_requires()
-
-    def install_from_dist(self):
-        pip_params = ['install', '-r', self.prepare_requirements()]
-        pip.main(pip_params)
+    def update_extras_requires(self):
+        self.distribution.extras_require = {}
+        for setup_type in SetupTypes.all:
+            self.distribution.extras_require[setup_type] = self.prepare_install_requires(setup_type)
 
 
 def command_factory(base_command):
     class Command(base_command, CustomCommand):
-        user_options = CustomCommand.user_options + base_command.user_options
+        def run(self):
+            self.update_extras_requires()
+            super(Command, self).run()
     return Command
 
 
-class CustomInstall(command_factory(install)):
-    def run(self):
-        self.install_from_dist()
-        super(CustomInstall, self).run()
-
-
-class CustomDevelop(command_factory(develop)):
-    def run(self):
-        self.update_install_requires()
-        super(CustomDevelop, self).run()
-
-
-class CustomSdist(command_factory(sdist)):
-    def run(self):
-        self.update_install_requires()
-        super(CustomSdist, self).run()
-
-
-class CustomEggInfo(command_factory(egg_info)):
-    def run(self):
-        #TODO: Check when egg_info is fired by other class. When not fired by upstream class > run self.update_install_requires()
-        #self.update_install_requires()
-        super(CustomEggInfo, self).run()
+class CustomInstall(command_factory(install)):pass
+class CustomDevelop(command_factory(develop)): pass
+class CustomSdist(command_factory(sdist)): pass
+class CustomEggInfo(command_factory(egg_info)): pass
 
 
 def tests():
@@ -100,7 +71,7 @@ def tests():
 
 setup(name="meme-maker",
     license = "MIT",
-    version='0.0.2',
+    version='0.2',
     description="CLI, API and Slack bot to generate memes. Make memes not war.",
     maintainer="Jacek Szubert",
     author="Jacek Szubert",
@@ -112,8 +83,6 @@ setup(name="meme-maker",
                  "Programming Language :: Python",
                  "Topic :: Software Development :: Libraries :: Python Modules",
                  ],
-    #TODO: Add option to extend install requires
-    #install_requires,
     packages=find_packages(),
     include_package_data=True,
     entry_points={
