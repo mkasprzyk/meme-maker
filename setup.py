@@ -32,9 +32,10 @@ class CustomCommand(object):
         )),
     ]
 
+    setup_type = SetupTypes.BASE
+
     def initialize_options(self):
         super(CustomCommand, self).initialize_options()
-        self.setup_type = SetupTypes.BASE
 
     def finalize_options(self):
         super(CustomCommand, self).finalize_options()
@@ -61,7 +62,7 @@ class CustomCommand(object):
 
 
 def command_factory(base_command):
-    class Command(CustomCommand, base_command):
+    class Command(base_command, CustomCommand):
         user_options = CustomCommand.user_options + base_command.user_options
     return Command
 
@@ -86,7 +87,8 @@ class CustomSdist(command_factory(sdist)):
 
 class CustomEggInfo(command_factory(egg_info)):
     def run(self):
-        self.update_install_requires()
+        #TODO: Check when egg_info is fired by other class. When not fired by upstream class > run self.update_install_requires()
+        #self.update_install_requires()
         super(CustomEggInfo, self).run()
 
 
