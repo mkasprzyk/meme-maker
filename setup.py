@@ -32,7 +32,7 @@ class CustomCommand(object):
         )),
     ]
 
-    setup_type = SetupTypes.BASE
+    setup_type = None
 
     def initialize_options(self):
         super(CustomCommand, self).initialize_options()
@@ -87,8 +87,8 @@ class CustomSdist(command_factory(sdist)):
 
 class CustomEggInfo(command_factory(egg_info)):
     def run(self):
-        #TODO: Check when egg_info is fired by other class. When not fired by upstream class > run self.update_install_requires()
-        #self.update_install_requires()
+        if self.setup_type:
+            self.update_install_requires()
         super(CustomEggInfo, self).run()
 
 
@@ -100,7 +100,7 @@ def tests():
 
 setup(name="meme-maker",
     license = "MIT",
-    version='0.0.2',
+    version='0.0.5',
     description="CLI, API and Slack bot to generate memes. Make memes not war.",
     maintainer="Jacek Szubert",
     author="Jacek Szubert",
