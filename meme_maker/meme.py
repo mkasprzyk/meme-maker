@@ -209,7 +209,7 @@ class Meme:
         )
         bottom_xy = [
             ((self.image.width - text_bottom_width)/2),
-            (self.image.height - self.font.getsize(text_bottom)[1] - top_xy[1])
+            (self.image.height - self.font.getsize(text_bottom)[1]*len(text_bottom.split('\n')) - top_xy[1])
         ]
 
         self.draw_text(top_xy, text_top)
