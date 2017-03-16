@@ -3,6 +3,8 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from setuptools.command.sdist import sdist
+from setuptools.command.egg_info import egg_info
+
 import unittest
 import pip
 
@@ -82,6 +84,12 @@ class CustomSdist(command_factory(sdist)):
         super(CustomSdist, self).run()
 
 
+class CustomEggInfo(command_factory(egg_info)):
+    def run(self):
+        self.update_install_requires()
+        super(CustomEggInfo, self).run()
+
+
 def tests():
     test_loader = unittest.TestLoader()
     test_suite = test_loader.discover('meme_maker.tests', pattern='test_*.py')
@@ -90,7 +98,7 @@ def tests():
 
 setup(name="meme-maker",
     license = "MIT",
-    version=0.1,
+    version='0.0.2',
     description="CLI, API and Slack bot to generate memes. Make memes not war.",
     maintainer="Jacek Szubert",
     author="Jacek Szubert",
@@ -114,7 +122,8 @@ setup(name="meme-maker",
     cmdclass={
         'install': CustomInstall,
         'develop': CustomDevelop,
-        'sdist': CustomSdist
+        'sdist': CustomSdist,
+        'egg_info': CustomEggInfo
     },
     test_suite='setup.tests'
 )
