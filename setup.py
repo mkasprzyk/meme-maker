@@ -60,9 +60,22 @@ class CustomCommand(object):
         pip_params = ['install', '-r', self.prepare_requirements()]
         pip.main(pip_params)
 
+    def store_setup_type(self):
+        with open(os.path.join(os.getcwd(), '.setup_type'), 'w') as setup_type:
+            setup_type.write(self.setup_type)
+
+    def get_setup_type(self):
+        try:
+            with open(os.path.join(os.getcwd(), '.setup_type'), 'r') as setup_type:
+                return setup_type.read()
+        except Exception as exc:
+            print(exc)
+            return
+
 
 def command_factory(base_command):
     class Command(base_command, CustomCommand):
+        base_command.setup_type = None
         user_options = CustomCommand.user_options + base_command.user_options
     return Command
 
@@ -82,13 +95,15 @@ class CustomDevelop(command_factory(develop)):
 class CustomSdist(command_factory(sdist)):
     def run(self):
         self.update_install_requires()
+        self.store_setup_type()
         super(CustomSdist, self).run()
 
 
 class CustomEggInfo(command_factory(egg_info)):
     def run(self):
-        if self.setup_type:
-            self.update_install_requires()
+        if not self.setup_type:
+            self.setup_type = self.get_setup_type()
+        self.update_install_requires()
         super(CustomEggInfo, self).run()
 
 
