@@ -98,7 +98,7 @@ class PluginValidator(PluginMeta):
     def check_meta_file(self):
         plugin_package = os.listdir(self.plugin_path)
         if not self.default_meta_file in plugin_package:
-            self.invalid('Missing meta file {}'.format(self.default_meta_file))
+            self.invalid.append('Missing meta file {}'.format(self.default_meta_file))
             return False
         return True
 
@@ -133,7 +133,6 @@ class PluginValidator(PluginMeta):
         if not handler_name:
             self.invalid.append('Missing value of required parameter handler')
             return False
-        self.plugin.meta = self.meta_content
         return True
 
     def is_valid(self):
@@ -147,7 +146,9 @@ class PluginValidator(PluginMeta):
         for validator in validators:
             if not validator():
                 return False
+        self.plugin.meta = self.meta_content
         return True
+
 
 class PluginsLoader(PluginMeta):
     def __init__(self, logger=None):
