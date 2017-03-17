@@ -8,7 +8,7 @@ Clone [meme-maker-serverless](https://github.com/jacekszubert/meme-maker-serverl
 
 **How to install?**
 ```
-python setup.py install
+pip install meme-maker[prod]
 ```
 
 **How to run?**
