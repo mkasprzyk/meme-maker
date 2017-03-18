@@ -13,4 +13,4 @@ deploy:
   script: scripts/release.sh
   skip_cleanup: true
   on:
-    branch: deployment
+    branch: master
