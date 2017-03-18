@@ -78,9 +78,7 @@ class PluginMeta(object):
         return os.path.join(self.plugins_path, self.plugin_name)
 
     def get_meta_path(self):
-        return os.path.join(
-            self.plugin_path, self.default_meta_file
-        )
+        return os.path.join(self.plugin_path, self.default_meta_file)
 
     def get_meta_content(self):
         with open(self.meta_path, 'r') as meta_file:
@@ -90,7 +88,7 @@ class PluginMeta(object):
                 raise
 
     def get_script_file(self, script_file):
-        return os.path.join(self.get_plugin_path(), script_file)
+        return os.path.join(self.plugin_path, script_file)
 
 
 #TODO: More validation

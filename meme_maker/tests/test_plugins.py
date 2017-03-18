@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 
+import os
+
 from meme_maker.plugins import (
     Plugin,
     PluginMeta,
@@ -14,11 +16,48 @@ fake_meta = {
     'version': 0,
     'scm': 'http://fake.git.repo',
     'script': 'fake.py',
+    'handler': 'run',
     #Optional fake fields
     'author': 'Fake Author',
     'email': 'fake@email.co',
 
 }
+
+
+class PluginValidatorTestCase(unittest.TestCase):
+    def setUp(self):
+        with patch.object(PluginMeta, 'get_meta_content', return_value=fake_meta) as mock_method:
+            self.validator = PluginValidator(fake_meta['name'])
+
+    def test_pass_validation_on_meta_file_present(self):
+        with patch.object(os, 'listdir', return_value=[self.validator.default_meta_file]) as mock_method:
+            self.assertTrue(self.validator.check_meta_file())
+
+    def test_fail_validation_on_meta_file_absence(self):
+        with patch.object(os, 'listdir', return_value=[]) as mock_method:
+            self.assertFalse(self.validator.check_meta_file())
+
+    def test_pass_on_required_fields_present(self):
+        self.assertTrue(self.validator.validate_required_fields())
+
+    #def test_fail_on_required_fields_not_present(self):
+    #    self.validator.plugin_meta_required.pop()
+    #    self.assertTrue(self.validator.validate_required_fields())
+
+    def test_fail_on_unsupported_fields_present(self):
+        fake_meta['alien'] = None
+        self.assertFalse(self.validator.validate_unsupported_fields())
+        del(fake_meta['alien'])
+
+    #def test_fail_on_handler_field_absence(self):
+    #    self.assertFalse(self.validator.validate_handler())
+
+    def test_if_is_valid_pass_plugins_meta_is_set(self):
+        with patch.object(os, 'listdir', return_value=[self.validator.default_meta_file]) as mock_method:
+            with patch.object(os.path, 'exists', return_value=True) as mock_method:
+                self.validator.is_valid()
+                self.assertDictEqual(self.validator.plugin.meta, fake_meta)
+
 
 class PluginTestCase(unittest.TestCase):
     def setUp(self):
@@ -46,16 +85,21 @@ class PluginTestCase(unittest.TestCase):
 
 
 class PluginMetaTestCase(unittest.TestCase):
-    @patch('meme_maker.plugins.yaml')
-    def setUp(self, mock_yaml):
-        self.meta = PluginMeta('fake')
+    def setUp(self):
+        with patch.object(PluginMeta, 'get_meta_content', return_value=fake_meta) as mock_method:
+            self.meta = PluginMeta(fake_meta['name'])
 
+    def test_get_plugin_path_returns_full_plugin_path_with_name(self):
+        self.assertEqual(self.meta.get_plugin_path(), os.path.join(self.meta.plugins_path, fake_meta['name']))
 
-    def test_plugins_path(self):
-        print(self.meta.plugins_path)
+    def test_get_meta_path_returns_full_default_meta_path(self):
+        self.assertEqual(self.meta.get_meta_path(), os.path.join(self.meta.get_plugin_path(), self.meta.default_meta_file))
+
+    def test_get_script_file_returns_full_script_path(self):
+        self.assertEqual(self.meta.get_script_file(fake_meta['script']), os.path.join(self.meta.plugin_path, fake_meta['script']))
+
 
 class PluginLoaderTestCase(unittest.TestCase):
+    #TDB
     pass
 
-class PluginValidatorTestCase(unittest.TestCase):
-    pass
