@@ -14,4 +14,7 @@ git fetch --tags
 bumpversion --no-input --feature
 release --no-input
 
-git push --tags
+git config --global user.name "Travis CI"
+git config --global user.email "$(python setup.py --maintainer-email)"
+
+git push --tags "https://${GH_TOKEN}@${GH_REF}"

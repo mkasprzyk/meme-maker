@@ -4,6 +4,10 @@ python:
   #TODO: Like above (just testing travis :-)
   - "3.5"
 
+env:
+  global:
+    - GH_REF: github.com/jacekszubert/meme-maker.git
+
 install: "pip install -r requirements/test.txt"
 
 script: python setup.py test
