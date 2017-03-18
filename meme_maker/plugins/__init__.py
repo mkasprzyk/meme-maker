@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 import os
-import yaml
 import importlib
+
+try:
+    import yaml
+except:
+    #Ignore missing pyyaml for testing purposes
+    yaml = None
 
 
 
