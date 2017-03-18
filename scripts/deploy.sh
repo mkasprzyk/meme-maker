@@ -7,8 +7,8 @@ script_dir="$(cd "$(dirname "$0")"; pwd)"
 envsubst < "${script_dir}/pypirc.tmpl" > ~/.pypirc
 
 git clean -fd
+git checkout "${TRAVIS_BRANCH}"
 git reset --hard "${TRAVIS_COMMIT}"
-git checkout "${TRAVIS_COMMIT}"
 
 git status
 ls -al
