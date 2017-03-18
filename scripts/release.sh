@@ -9,10 +9,10 @@ envsubst < "${script_dir}/pypirc.tmpl" > ~/.pypirc
 git clean -fd
 git checkout "${TRAVIS_BRANCH}"
 git reset --hard "${TRAVIS_COMMIT}"
-
-git status
-ls -al
-git remote -v
+git fetch --tags
 
 bumpversion --no-input --feature
 release --no-input
+
+git tag "$(python setup.py --version)"
+git push --tags
