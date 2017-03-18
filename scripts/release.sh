@@ -14,5 +14,4 @@ git fetch --tags
 bumpversion --no-input --feature
 release --no-input
 
-git tag "$(python setup.py --version)"
 git push --tags
