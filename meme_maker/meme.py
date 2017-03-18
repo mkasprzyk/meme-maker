@@ -7,6 +7,7 @@ import requests
 import tempfile
 import textwrap
 import time
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -200,8 +201,8 @@ class Meme:
         #font_size = #TODO motzno - some dependency on the image height
         self.font = ImageFont.truetype(self.font_path, size=45)
 
-        text_top, text_top_width = self.prepare_text(' '.join(self.text).split('|')[0])
-        text_bottom, text_bottom_width = self.prepare_text(' '.join(self.text).split('|')[1:])
+        text_top, text_top_width = self.prepare_text(self.text.split('|')[0])
+        text_bottom, text_bottom_width = self.prepare_text(self.text.split('|')[1:])
 
         top_xy = (
             ((self.image.width - text_top_width)/2),

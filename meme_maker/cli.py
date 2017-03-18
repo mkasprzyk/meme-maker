@@ -20,7 +20,7 @@ def cli(meme, url, text):
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
     logger = logging.getLogger('meme')
 
-    meme = Meme(logger, template, url, text)
+    meme = Meme(logger, template, url, text[0])
     meme.make_meme('/tmp/')
 
 
