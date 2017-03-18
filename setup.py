@@ -71,7 +71,7 @@ def tests():
 
 setup(name="meme-maker",
     license = "MIT",
-    version='0.2',
+    version='0.3',
     description="CLI, API and Slack bot to generate memes. Make memes not war.",
     maintainer="Jacek Szubert",
     author="Jacek Szubert",
