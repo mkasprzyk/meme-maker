@@ -11,10 +11,3 @@ env:
 install: "pip install -r requirements/test.txt"
 
 script: python setup.py test
-
-deploy:
-  provider: script
-  script: scripts/release.sh
-  skip_cleanup: true
-  on:
-    branch: master
