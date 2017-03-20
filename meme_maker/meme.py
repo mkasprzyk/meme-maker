@@ -214,10 +214,10 @@ class Meme:
     def set_text_wrapping(self, text_length):
         if text_length <= 32:
             wrapping = 32
+        elif text_length > 100:
+            wrapping = 10 + text_length / 3
         elif text_length > 32:
-            wrapping = 4 + text_length / 2
-        elif text_length > 120:
-            wrapping = 3 + text_length / 3
+            wrapping = 5 + text_length / 2
         self.logger.info('wrapping {}'.format(wrapping))
 
         return wrapping
