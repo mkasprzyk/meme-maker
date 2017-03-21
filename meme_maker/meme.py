@@ -7,6 +7,7 @@ import requests
 import tempfile
 import textwrap
 import time
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -83,12 +84,15 @@ class Meme:
         self.text = text
         self.filetype = 'png'
         self.storage = Storage(self.logger)
-        self.font_path = os.path.join(os.path.dirname(__file__), 'assets/impact.ttf')
+        self.font_path = os.path.join(os.path.dirname(__file__),
+                                      'assets/impact.ttf')
 
     def set_paths(self):
-        self.template_path = '%sme/mplate/%s.%s' % (self.storage.path, self.template_name, self.filetype)
+        self.template_path = '%sme/mplate/%s.%s' % (
+            self.storage.path, self.template_name, self.filetype)
         timestamp = int(time.time())
-        self.meme_path = '%sme/me/%s-%s.%s' % (self.storage.path, self.template_name, timestamp, self.filetype)
+        self.meme_path = '%sme/me/%s-%s.%s' % (
+            self.storage.path, self.template_name, timestamp, self.filetype)
 
     def generate_template_name(self):
         return hashlib.md5(self.url.encode('utf-8')).hexdigest()
@@ -109,7 +113,9 @@ class Meme:
 
     def store_image(self, path):
         self.logger.info('storing image at %s' % path)
-        tmp_path = '%s.%s' % (tempfile.NamedTemporaryFile().name, self.filetype)
+        tmp_path = '%s.%s' % (tempfile.NamedTemporaryFile().name,
+                              self.filetype)
+
         self.image.save(tmp_path)
         if self.storage.type == 'local':
             self.image.save(path)
@@ -141,25 +147,97 @@ class Meme:
 
         return True
 
+    def find_longest_line(self, text):
+        longest_width = 0
+        longest_line = ''
+        for line in text:
+            width = self.draw.textsize(line, font=ImageFont.truetype(self.font_path, 20))[0]
+            if width > longest_width:
+                longest_width = width
+                longest_line = line
+
+        return longest_line
+
+    def get_font_measures(self, text, font_size, ratio):
+        measures = {}
+        measures['font'] = ImageFont.truetype(self.font_path, size=font_size)
+        measures['width'] = self.draw.textsize(text, font=measures['font'])[0]
+        measures['ratio'] = measures['width'] / float(self.image.width)
+        measures['ratio_diff'] = abs(ratio - measures['ratio'])
+
+        return measures
+
+    def optimize_font(self, text):
+        """Fuckin' magnets how do they work"""
+        font_min_size = 12
+        font_max_size = 70
+        font_size_range = range(font_min_size, font_max_size + 1)
+
+        longest_text_line = self.find_longest_line(text)
+
+        # set min/max ratio of font width to image width
+        min_ratio = 0.7
+        max_ratio = 0.9
+        perfect_ratio = min_ratio + (max_ratio - min_ratio)/2
+        ratio = 0
+
+        while (ratio < min_ratio or ratio > max_ratio) and len(font_size_range) > 2:
+            measures = {
+                'top': self.get_font_measures(
+                           text=longest_text_line,
+                           font_size=font_size_range[-1],
+                           ratio=perfect_ratio
+                       ),
+                'low': self.get_font_measures(
+                           text=longest_text_line,
+                           font_size=font_size_range[0],
+                           ratio=perfect_ratio
+                       )
+            }
+
+            half_index = len(font_size_range)/2
+            if measures['top']['ratio_diff'] < measures['low']['ratio_diff']:
+                closer = 'top'
+                font_size_range = font_size_range[half_index:-1]
+            else:
+                closer = 'low'
+                font_size_range = font_size_range[0:half_index]
+
+            ratio = measures[closer]['ratio']
+            witdh = measures[closer]['width']
+            font = measures[closer]['font']
+
+        width = self.draw.textsize(longest_text_line, font=font)[0]
+
+        return font, width
+
+    def set_text_wrapping(self, text_length):
+        if text_length <= 32:
+            wrapping = 32
+        elif text_length > 100:
+            wrapping = 10 + text_length / 3
+        elif text_length > 32:
+            wrapping = 5 + text_length / 2
+        self.logger.info('wrapping {}'.format(wrapping))
+
+        return wrapping
+
     def prepare_text(self, text):
         if not text:
             return '', 0
         if type(text) == list:
             text = text[0]
-        self.logger.info('preparing meme text')
-        wrapping = 32
+        self.logger.info('preparing meme text: {}'.format(text))
+        wrapping = self.set_text_wrapping(len(text))
         text = text.strip().upper()
         text = textwrap.wrap(text, wrapping)
-        text_width = 0
-        for line in text:
-            width = self.draw.textsize(line, font=self.font)[0]
-            if text_width < width:
-                text_width = width
+        font, text_width = self.optimize_font(text)
+
         text = '\n'.join(text)
 
-        return text, text_width
+        return text, text_width, font
 
-    def draw_text(self, xy, text):
+    def draw_text(self, xy, text, font):
         self.logger.info('drawing meme text: %s' % text)
         x = xy[0]
         y = xy[1]
@@ -181,7 +259,7 @@ class Meme:
                 xy,
                 text,
                 fill='black',
-                font=self.font,
+                font=font,
                 align='center'
             )
 
@@ -189,31 +267,36 @@ class Meme:
             (x, y),
             text,
             fill='white',
-            font=self.font,
+            font=font,
             align='center'
         )
-
 
     def draw_meme(self):
         self.logger.info('drawing meme')
         self.draw = ImageDraw.Draw(self.image)
-        #font_size = #TODO motzno - some dependency on the image height
-        self.font = ImageFont.truetype(self.font_path, size=45)
 
-        text_top, text_top_width = self.prepare_text(' '.join(self.text).split('|')[0])
-        text_bottom, text_bottom_width = self.prepare_text(' '.join(self.text).split('|')[1:])
-
-        top_xy = (
-            ((self.image.width - text_top_width)/2),
-            (self.image.height/18)
+        margin_xy = (
+            0,
+            self.image.height/18
         )
-        bottom_xy = [
-            ((self.image.width - text_bottom_width)/2),
-            (self.image.height - self.font.getsize(text_bottom)[1]*len(text_bottom.split('\n')) - top_xy[1])
-        ]
 
-        self.draw_text(top_xy, text_top)
-        self.draw_text(bottom_xy, text_bottom)
+        text_top = self.text.split('|')[0]
+        if text_top:
+            text_top, text_top_width, top_font = self.prepare_text(text_top)
+            top_xy = (
+                ((self.image.width - text_top_width)/2),
+                (margin_xy[1])
+            )
+            self.draw_text(top_xy, text_top, top_font)
+
+        text_bottom = self.text.split('|')[1:]
+        if text_bottom:
+            text_bottom, text_bottom_width, bottom_font = self.prepare_text(text_bottom)
+            bottom_xy = [
+                ((self.image.width - text_bottom_width)/2),
+                (self.image.height - bottom_font.getsize(text_bottom)[1]*len(text_bottom.split('\n')) - margin_xy[1])
+            ]
+            self.draw_text(bottom_xy, text_bottom, bottom_font)
 
     def make_meme(self, path):
         self.storage.recognize_storage(path)
