@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import os
+import logging
 import importlib
 
-try:
-    import yaml
-except:
-    #Ignore missing pyyaml for testing purposes
-    yaml = None
+import yaml
 
+
+logger = logging.getLogger('meme.plugins')
+logger.setLevel(logging.INFO)
 
 
 class Plugin(object):
@@ -153,9 +153,43 @@ class PluginValidator(PluginMeta):
         return True
 
 
-class PluginsLoader(PluginMeta):
-    def __init__(self, logger=None):
+class PluginContext(object):
+    def __init__(self, meme, handler, args, kwargs):
+        self.meme = meme
+        self.handler = handler
+        self.args = args
+        self.kwargs = kwargs
         self.logger = logger
+
+        self.result = None
+        self.event = None
+
+    def to_dict(self):
+        return self.__dict__
+
+    def __str__(self):
+        return '<PluginContext: {}>'.format(self.event)
+
+
+class PluginsLoader(PluginMeta):
+    """ Plugin loader for Meme-Maker.
+
+        Initialization:
+            plugins = PluginsLoader()
+            plugins.discover()
+
+        Dispatch event:
+
+            @plugins.dispatch
+            def some_meme_method(self):
+                ...
+
+        Receive event:
+            def some_plugin_method(context):
+                context.logger.info(context.to_dict())
+    """
+
+    def __init__(self):
         self.plugins = {}
 
     def handle(self, plugin_name, context):
@@ -169,30 +203,44 @@ class PluginsLoader(PluginMeta):
 
     def discover(self):
         if not os.path.exists(self.plugins_path):
-            self.logger.error('Unable to resolve plugins path: {}'.format(plugins_path))
+            logger.error('Unable to resolve plugins path: {}'.format(plugins_path))
             return
         self.load()
 
     def __prepare(self, plugins):
         for plugin in plugins:
-            self.logger.info('Checking plugin: {}'.format(plugin))
+            logger.info('Checking plugin: {}'.format(plugin))
             maybe_plugin = PluginValidator(plugin)
 
             if maybe_plugin.is_valid():
                 yield maybe_plugin.plugin
             else:
-                self.logger.warning('Plugin {} is invalid'.format(plugin))
+                logger.warning('Plugin {} is invalid'.format(plugin))
                 for cause in maybe_plugin.invalid:
                     self.logger.warning(cause)
 
     def load(self):
         plugins = [
             plugin for plugin in os.listdir(self.plugins_path) if
-            os.path.isdir(os.path.join(self.plugins_path, plugin))
+            os.path.isdir(os.path.join(self.plugins_path, plugin)) and plugin != '__pycache__'
         ]
         try:
             for plugin in self.__prepare(plugins):
                 plugin.module = importlib.import_module('.'.join([__name__, plugin.name, plugin.script]))
                 self.plugins[plugin.name] = plugin
         except ImportError as exc:
-            self.logger.error('Unable to load plugins: {}'.format(exc))
+            logger.error('Unable to load plugins: {}'.format(exc))
+
+    def _dispatch_event(self, context, event):
+        for plugin in self.plugins:
+            context.event = '{}_{}'.format(event, context.handler.__name__)
+            self.handle(plugin, context)
+
+    def dispatch(self, handler):
+        def wrapper(meme, *args, **kwargs):
+            context = PluginContext(meme, handler, args, kwargs)
+            self._dispatch_event(context, 'pre')
+            context.result = handler(meme, *args, **kwargs)
+            self._dispatch_event(context, 'post')
+            return context.result
+        return wrapper
