@@ -90,16 +90,19 @@ class PluginMetaTestCase(unittest.TestCase):
             self.meta = PluginMeta(fake_meta['name'])
 
     def test_get_plugin_path_returns_full_plugin_path_with_name(self):
-        self.assertEqual(self.meta.get_plugin_path(), os.path.join(self.meta.plugins_path, fake_meta['name']))
+        self.assertEqual(self.meta.get_plugin_path(),
+            os.path.join(self.meta.plugins_path, fake_meta['name']))
 
     def test_get_meta_path_returns_full_default_meta_path(self):
-        self.assertEqual(self.meta.get_meta_path(), os.path.join(self.meta.get_plugin_path(), self.meta.default_meta_file))
+        self.assertEqual(self.meta.get_meta_path(),
+            os.path.join(self.meta.get_plugin_path(), self.meta.default_meta_file))
 
     def test_get_script_file_returns_full_script_path(self):
-        self.assertEqual(self.meta.get_script_file(fake_meta['script']), os.path.join(self.meta.plugin_path, fake_meta['script']))
+        self.assertEqual(self.meta.get_script_file(fake_meta['script']),
+            os.path.join(self.meta.plugin_path, fake_meta['script']))
 
 
 class PluginLoaderTestCase(unittest.TestCase):
-    #TDB
+    #TODO: Write more :-) PluginLoader tests
     pass
 

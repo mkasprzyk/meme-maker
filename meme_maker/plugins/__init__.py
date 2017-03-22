@@ -87,8 +87,8 @@ class PluginMeta(object):
             except yaml.YAMLError as exc:
                 raise
 
-    def get_script_file(self, script_file):
-        return os.path.join(self.plugin_path, script_file)
+    def get_script_file(self, script_name):
+        return os.path.join(self.plugin_path, script_name)
 
 
 #TODO: More validation
@@ -96,12 +96,12 @@ class PluginValidator(PluginMeta):
     def __init__(self, plugin_name):
         super(PluginValidator, self).__init__(plugin_name)
         self.plugin = Plugin()
-        self.invalid = []
+        self.errors = []
 
     def check_meta_file(self):
         plugin_package = os.listdir(self.plugin_path)
         if not self.default_meta_file in plugin_package:
-            self.invalid.append('Missing meta file {}'.format(self.default_meta_file))
+            self.errors.append('Missing meta file {}'.format(self.default_meta_file))
             return False
         return True
 
@@ -109,32 +109,32 @@ class PluginValidator(PluginMeta):
         common_fields = set(self.plugin_meta_required) & set(self.meta_content.keys())
         missing_fields = set(self.plugin_meta_required) - set(self.meta_content.keys())
         if len(common_fields) < len(self.plugin_meta_required):
-            self.invalid.append('Missing required fields: {}'.format(missing_fields))
+            self.errors.append('Missing required fields: {}'.format(missing_fields))
             return False
         return True
 
     def validate_unsupported_fields(self):
         unsupported_fields = set(self.meta_content.keys()) - set(self.plugin_meta_required + self.plugin_meta_optional)
         if len(unsupported_fields):
-            self.invalid.append('Unsupported field: {}'.format(unsupported_fields))
+            self.errors.append('Unsupported field: {}'.format(unsupported_fields))
             return False
         return True
 
     def validate_script_file(self):
         script_name = self.meta_content.get('script')
         if not script_name:
-            self.invalid.append('Missing value of required parameter script')
+            self.errors.append('Missing value of required parameter script')
             return False
         script_file = self.get_script_file(script_name)
         if not os.path.exists(script_file):
-            self.invalid.append('Missing script file: {}'.format(script_file))
+            self.errors.append('Missing script file: {}'.format(script_file))
             return False
         return True
 
     def validate_handler(self):
         handler_name = self.meta_content.get('handler')
         if not handler_name:
-            self.invalid.append('Missing value of required parameter handler')
+            self.errors.append('Missing value of required parameter handler')
             return False
         return True
 
@@ -210,19 +210,19 @@ class PluginsLoader(PluginMeta):
     def __prepare(self, plugins):
         for plugin in plugins:
             logger.info('Checking plugin: {}'.format(plugin))
-            maybe_plugin = PluginValidator(plugin)
+            plugin_validator = PluginValidator(plugin)
 
-            if maybe_plugin.is_valid():
-                yield maybe_plugin.plugin
+            if plugin_validator.is_valid():
+                yield plugin_validator.plugin
             else:
                 logger.warning('Plugin {} is invalid'.format(plugin))
-                for cause in maybe_plugin.invalid:
-                    self.logger.warning(cause)
+                for error in plugin_validator.errors:
+                    logger.error(error)
 
     def load(self):
-        plugins = [
-            plugin for plugin in os.listdir(self.plugins_path) if
-            os.path.isdir(os.path.join(self.plugins_path, plugin)) and plugin != '__pycache__'
+        plugins = [plugin
+            for plugin in os.listdir(self.plugins_path)
+            if os.path.isdir(os.path.join(self.plugins_path, plugin)) and plugin != '__pycache__'
         ]
         try:
             for plugin in self.__prepare(plugins):
