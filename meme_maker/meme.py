@@ -6,12 +6,18 @@ import io
 import requests
 import tempfile
 import textwrap
+import logging
 import time
 import sys
 
+from .plugins import PluginsLoader
 from PIL import Image, ImageDraw, ImageFont
 
 import boto3
+
+
+plugins = PluginsLoader()
+plugins.discover()
 
 
 class Storage:
@@ -87,6 +93,7 @@ class Meme:
         self.font_path = os.path.join(os.path.dirname(__file__),
                                       'assets/impact.ttf')
 
+
     def set_paths(self):
         self.template_path = '%sme/mplate/%s.%s' % (
             self.storage.path, self.template_name, self.filetype)
@@ -94,9 +101,11 @@ class Meme:
         self.meme_path = '%sme/me/%s-%s.%s' % (
             self.storage.path, self.template_name, timestamp, self.filetype)
 
+
     def generate_template_name(self):
         return hashlib.md5(self.url.encode('utf-8')).hexdigest()
 
+    @plugins.dispatch
     def get_image_from_url(self):
         self.logger.info('downloading %s' % self.url)
         try:
@@ -129,6 +138,7 @@ class Meme:
                 Key=path
             )
 
+    @plugins.dispatch
     def get_image(self, path):
         self.logger.info('getting image from %s' % path)
         if self.storage.type == 'local':

@@ -244,3 +244,12 @@ class PluginsLoader(PluginMeta):
             self._dispatch_event(context, 'post')
             return context.result
         return wrapper
+
+
+def subscribe(events):
+    def real_decorator(fn):
+        def wrapper(context):
+            if context.event in events:
+                return fn(context)
+        return wrapper
+    return real_decorator
